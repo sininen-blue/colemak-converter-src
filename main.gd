@@ -1,16 +1,10 @@
 extends Control
 
 onready var text_edit = $TextEdit
+onready var converted_text = $ConvertedText
 onready var animation_player = $AnimationPlayer
 onready var popup = $Popup
 onready var popup_timer = $PopupTimer
-
-#var converted_column : int = 0
-#var input : String = ""
-
-var input : String = ""
-var converted_column : int = 0
-var convert_queue : Array = []
 
 var colemak_dict : Dictionary = {
 	"q": "q",
@@ -77,7 +71,8 @@ func _ready():
 
 func _input(event):
 	if event.is_action_pressed("copy"):
-		OS.set_clipboard(text_edit.text)
+		OS.set_clipboard(converted_text.text)
+		converted_text.text = ""
 		text_edit.text = ""
 		
 		popup.popup_centered()
@@ -85,23 +80,18 @@ func _input(event):
 		popup_timer.start()
 
 
-func _on_TextEdit_text_changed():
-	# if going forward
-	if text_edit.cursor_get_column() > converted_column:
-		input = text_edit.text[-1]
-		convert_queue.append(input)
-	
-	# needed a queue to make it faster
-	for character in convert_queue:
-		if colemak_dict.has(convert_queue[0]):
-			text_edit.text[-1] = colemak_dict[convert_queue.pop_front()]
-		else:
-			text_edit.text[-1] = convert_queue.pop_front()
-		
-		text_edit.cursor_set_column(1000000000)
-	
-	converted_column = text_edit.cursor_get_column()
-
 
 func _on_PopupTimer_timeout():
 	popup.hide()
+
+
+func _on_TextEdit_text_changed():
+	var converted_string : String = ""
+	
+	for character in text_edit.text:
+		if colemak_dict.has(character):
+			converted_string += colemak_dict[character]
+		else:
+			converted_string += character
+	
+	converted_text.text = converted_string
